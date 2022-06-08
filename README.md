@@ -1,4 +1,8 @@
 # 2D-SPH
 A 2D SPH implementation using compute shader
-`make`
-`./sim`
+
+# How to run code
+```
+make
+./sim
+```
