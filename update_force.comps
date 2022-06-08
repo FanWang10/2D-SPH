@@ -1,0 +1,70 @@
+
+#version 460
+
+#define WORK_GROUP_SIZE 128
+
+layout (local_size_x = WORK_GROUP_SIZE) in;
+
+#define M_PI 3.14159265359
+#define PARTICLE_NUM 5000
+#define H 4.f * 0.005f
+#define MASS 0.02f
+#define SPIKY_GRAD -10.f/(M_PI*pow(H, 8.f))
+#define VISCOSITY 3000.f
+#define GRAVITY vec2(0, -9806.5f)
+
+layout(std430, binding = 0) buffer position_block
+{
+    vec2 position[];
+};
+
+layout(std430, binding = 1) buffer velocity_block
+{
+    vec2 velocity[];
+};
+
+layout(std430, binding = 2) buffer force_block
+{
+    vec2 force[];
+};
+
+layout(std430, binding = 3) buffer density_block
+{
+    float density[];
+};
+
+layout(std430, binding = 4) buffer pressure_block
+{
+    float pressure[];
+};
+
+
+void main()
+{
+    uint i = gl_GlobalInvocationID.x;
+
+    vec2 force_gravity = GRAVITY * density[i];
+    vec2 force_pressure = vec2(0, 0);
+    vec2 force_viscosity = vec2(0, 0);
+
+    for(int j = 0; j < PARTICLE_NUM; j++)
+    {
+        if(i != j)
+        {
+            vec2 vector_ij = position[i] - position[j];
+            float distance_ij = length(vector_ij);
+
+            if(distance_ij < H)
+            {
+                force_pressure += -1.f * MASS * (pressure[i] + pressure[j]) *
+                                 -45.f / (M_PI * pow(H, 6)) * pow(H - distance_ij, 2) * normalize(vector_ij)
+                                / (2.f * density[j]);
+                force_viscosity +=  MASS * ((velocity[j] - velocity[i]) / density[j]) * 
+                                45.f / (M_PI * pow(H, 6)) * (H - distance_ij);
+            }
+        }
+    }
+    force_viscosity *= VISCOSITY;
+    force[i] = force_gravity + force_pressure + force_viscosity;
+   // force handle
+}

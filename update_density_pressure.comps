@@ -1,0 +1,62 @@
+#version 460
+
+#define WORK_GROUP_SIZE 128
+
+layout (local_size_x = WORK_GROUP_SIZE) in;
+
+#define M_PI 3.14159265359f
+#define PARTICLE_NUM 5000
+#define H 4.f * 0.005f
+#define H2 H*H
+#define MASS 0.02f
+#define GAS_CONSTANT 2000.f
+#define REST_DENSITY 1000.f
+
+layout(std430, binding = 0) buffer position_block
+{
+    vec2 position[];
+};
+
+layout(std430, binding = 1) buffer velocity_block
+{
+    vec2 velocity[];
+};
+
+layout(std430, binding = 2) buffer force_block
+{
+    vec2 force[];
+};
+
+layout(std430, binding = 3) buffer density_block
+{
+    float density[];
+};
+
+layout(std430, binding = 4) buffer pressure_block
+{
+    float pressure[];
+};
+
+
+
+void main()
+{
+    uint i = gl_GlobalInvocationID.x;
+    
+    float density_particle = 0.f;
+
+    for(int j = 0; j < PARTICLE_NUM; j++)
+    {
+        float distance = length(position[i] - position[j]);
+        float distance2 = distance * distance;
+        if(distance2 < H2)
+        {
+            density_particle += MASS * 
+            /*poly6*/              315.f * pow(H2 - distance2, 3) / (64.f * M_PI * pow(H, 9));
+        }
+    }
+    
+    density[i] = density_particle;
+    pressure[i] = max(GAS_CONSTANT * (density_particle - REST_DENSITY), 0.f);
+    // density && pressure handle
+}
