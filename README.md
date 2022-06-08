@@ -7,4 +7,5 @@ make
 ./sim
 ```
 # Result(5000 Particle)
+https://github.com/FanWang10/2D-SPH/blob/main/sph.gif
 ![Alt Text](https://github.com/FanWang10/2D-SPH/blob/main/sph.gif)
